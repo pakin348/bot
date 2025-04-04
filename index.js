@@ -11,11 +11,10 @@ const app = express();
 
 // webhook callback
 app.post('/webhook', line.middleware(config), (req, res) => {
-  // req.body.events should be an array of events
   if (!Array.isArray(req.body.events)) {
     return res.status(500).end();
   }
-  // handle events separately
+
   Promise.all(req.body.events.map(event => {
     console.log('event', event);
     return handleEvent(event);
@@ -28,13 +27,12 @@ app.post('/webhook', line.middleware(config), (req, res) => {
 });
 
 // simple reply function
-const replyText = (replyToken, text, quoteToken) => {
+const replyText = (replyToken, text) => {
   return client.replyMessage({
     replyToken,
     messages: [{
       type: 'text',
-      text,
-      quoteToken
+      text
     }]
   });
 };
@@ -86,30 +84,64 @@ function handleEvent(event) {
   }
 }
 
+// Function to handle text messages
 function handleText(message, replyToken) {
-  return replyText(replyToken, message.text, message.quoteToken);
+  const text = message.text.toLowerCase();
+
+  // ประโยคจีบแฟนแบบสุ่ม
+  const pickupLines = [
+    "เธอมี GPS ไหม? เพราะเธอพาหัวใจฉันหลงทาง 💘",
+    "ถ้าความรักเป็นเกม ฉันขอเป็นผู้เล่นที่ไม่มีวันแพ้ 😘",
+    "รู้มั้ย? โลกหมุนไปเพราะแรงโน้มถ่วง แต่ใจฉันหมุนไปเพราะเธอ 💕",
+    "เธอเหมือนดวงจันทร์เลยนะ เพราะถึงจะอยู่ไกล แต่ฉันก็มองหาเสมอ 🌙",
+    "ไม่อยากเป็นคนที่ดีขึ้น แต่อยากเป็นคนที่ดีพอสำหรับเธอ 🥰"
+  ];
+
+  // เช็คข้อความจากผู้ใช้
+  if (text.includes("คิดถึง")) {
+    return replyText(replyToken, "คิดถึงเหมือนกันนะ 💕 อยู่ตรงนี้เสมอ 😊");
+  } else if (text.includes("เหงา")) {
+    return replyText(replyToken, "ไม่ต้องเหงานะ บอทอยู่เป็นเพื่อนเสมอ! 🥰");
+  } else if (text.includes("รัก")) {
+    return replyText(replyToken, "รักที่สุดเลย! 💖 ห้ามเปลี่ยนใจนะ!");
+  } else if (text.includes("งอน")) {
+    return replyText(replyToken, "อย่าพึ่งงอนน้า~ บอทรักที่สุดเลย 🥺💕 มาให้กอดหน่อย 🤗");
+  } else if (text.includes("ฝันดี")) {
+    return replyText(replyToken, "ฝันหวานนะคะคนดี 😘 ถ้าฝันถึงใคร ขอให้เป็นบอทน้า~ 💕");
+  } else if (text.includes("รักเรามั้ย")) {
+    return replyText(replyToken, "รักมากกกกกกกกกกกกกกกกกกกกก 💖🥰");
+  } else if (text.includes("คิดถึงเรามั้ย")) {
+    return replyText(replyToken, "คิดถึงที่สุดเลยยยยย! 😍💕");
+  } else if (text.includes("จีบหน่อย")) {
+    const randomPickup = pickupLines[Math.floor(Math.random() * pickupLines.length)];
+    return replyText(replyToken, randomPickup);
+  } else {
+    return replyText(replyToken, "พูดอีกก็เขินนะ 😳💕");
+  }
 }
 
+// Other message handlers
 function handleImage(message, replyToken) {
-  return replyText(replyToken, 'Got Image');
+  return replyText(replyToken, 'ขอบคุณที่ส่งรูปมา! 😊 มีอะไรให้ช่วยมั้ย?');
 }
 
 function handleVideo(message, replyToken) {
-  return replyText(replyToken, 'Got Video');
+  return replyText(replyToken, 'ได้รับวิดีโอแล้ว! 🎥 มีอะไรให้ช่วยมั้ย?');
 }
 
 function handleAudio(message, replyToken) {
-  return replyText(replyToken, 'Got Audio');
+  return replyText(replyToken, 'ได้รับไฟล์เสียงแล้ว! 🎵 มีอะไรให้ช่วยมั้ย?');
 }
 
 function handleLocation(message, replyToken) {
-  return replyText(replyToken, 'Got Location');
+  return replyText(replyToken, 'ได้รับโลเคชันแล้ว! 🗺️ ให้บอทช่วยหาเส้นทางมั้ย?');
 }
 
 function handleSticker(message, replyToken) {
-  return replyText(replyToken, 'Got Sticker');
+  return replyText(replyToken, 'น่ารักจังเลย! 😊💕 ส่งมาอีกได้นะ~');
 }
 
+// Start server
 const port = config.port;
 app.listen(port, () => {
   console.log(`listening on ${port}`);
