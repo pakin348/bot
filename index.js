@@ -45,65 +45,86 @@ function handleEvent(event) {
   return Promise.resolve(null);
 }
 
-// คำตอบแบบสุ่มสำหรับแต่ละประเภทข้อความ
-const responses = {
-  "คิดถึง": [
+// Function to handle text messages
+function handleText(message, replyToken) {
+  const text = message.text.toLowerCase();
+
+  // สุ่มคำตอบสำหรับ "คิดถึง"
+  const thinkOfYouReplies = [
     "เค้าคิดถึงเหมือนกันนะไอ้เด็ก 💕😊",
     "คิดถึงที่สุดเลยยยย! 😍💕",
     "คิดถึงวันแรกที่เราเจอกันเลย 💖",
     "คิดถึงแบบไม่ไหวแล้ว มาหาหน่อยได้มั้ย 🥺💕",
     "คิดถึงแค่ไหนให้ลองเอาหัวใจไปชั่งดู 💘"
-  ],
-  "เหงา": [
+  ];
+
+  // สุ่มคำตอบสำหรับ "เหงา"
+  const lonelyReplies = [
     "ไม่ต้องเหงานะ พี่อยู่เป็นเเฟนเสมอ! 🥰",
     "เหงาหรอ~ มากอดกันเร็ว 🤗💕",
-    "เหงาแบบนี้ต้องให้พี่ดูแลแล้วนะ 😘",
     "เหงาก็แค่ส่งข้อความมาหาไง บอทอยู่ตรงนี้เสมอ 💖",
-    "บอทอยู่เป็นเพื่อนนะ อย่าคิดมากน้าา 💕"
-  ],
-  "รัก": [
+    "บอทอยู่เป็นเพื่อนนะ อย่าคิดมากน้าา 💕",
+    "เหงาแบบนี้ต้องให้พี่ดูแลแล้วนะ 😘"
+  ];
+
+  // สุ่มคำตอบสำหรับ "รัก"
+  const loveReplies = [
     "เค้ารักเธอที่สุดเลย! 💖 ห้ามเปลี่ยนใจไปรักคนอื่นน้าาา",
     "รักนะคะที่รักกกก 😍💕",
     "รักเธอเท่าท้องฟ้าเลย 🌌💘",
     "รักแบบไม่มีเหตุผล รู้แค่ว่ารักก็พอ 😘",
     "รักแล้วรักเลย ไม่เปลี่ยนใจแน่นอน 💕"
-  ],
-  "งอน": [
+  ];
+
+  // สุ่มคำตอบสำหรับ "งอน"
+  const sulkReplies = [
     "อย่าพึ่งงอนน้า~ พี่รักหนูที่สุดเลย 🥺💕 มาให้กอดหน่อยน้าาา 🤗",
     "งอนแบบนี้ต้องโดนหอมแก้มซะแล้ว 😘💕",
     "โถ่~ ใครทำให้หนูงอนนนน 😢 มาให้เค้าปลอบเร็ว 💕",
     "งอนแบบนี้ พี่ต้องง้อใช่มั้ย 🥺💕",
     "อย่าทำหน้ามุ่ยสิ เดี๋ยวพี่พาไปกินของอร่อยนะ 🍰💕"
-  ],
-  "ฝันดี": [
+  ];
+
+  // สุ่มคำตอบสำหรับ "ฝันดี"
+  const sweetDreamsReplies = [
     "ฝันหวานนะคะคนดี 😘 ถ้าฝันถึงใคร ขอให้เป็นเค้าน้า~ 💕",
     "ฝันดีน้าาาา 😴💖",
     "นอนหลับฝันดี พรุ่งนี้ตื่นมาสดใส 💕",
     "คืนนี้นอนกอดหมอนแทนเค้าก่อนนะ 🥺💕",
     "หลับฝันดีนะคะ ตื่นมาจะได้เจอข้อความจากเค้า 😘"
-  ],
-  "สวัสดี": [
+  ];
+
+  // สุ่มคำตอบสำหรับ "สวัสดี"
+  const helloReplies = [
     "สวัสดีค่าาา~ วันนี้เป็นยังไงบ้าง? 😊💕",
     "สวัสดีค่ะ! มีอะไรให้บอทช่วยมั้ย 😘",
     "สวัสดีวันสดใส~ ☀️💕",
     "ทักมาบ่อย ๆ นะ เค้าชอบคุยด้วย 😍",
     "เธอมี GPS ไหม? เพราะเธอพาหัวใจฉันหลงทาง 💘"
-  ]
-};
+  ];
 
-// ฟังก์ชันสุ่มตอบกลับจากหมวดหมู่ที่ตรงกับข้อความของผู้ใช้
-function handleText(message, replyToken) {
-  const text = message.text.toLowerCase();
-
-  // หา key ที่ตรงกับข้อความของผู้ใช้
-  for (const key in responses) {
-    if (text.includes(key)) {
-      const randomReply = responses[key][Math.floor(Math.random() * responses[key].length)];
-      return replyText(replyToken, randomReply);
-    }
+  // เช็คข้อความจากผู้ใช้แล้วสุ่มตอบ
+  if (text.includes("คิดถึง")) {
+    const randomReply = thinkOfYouReplies[Math.floor(Math.random() * thinkOfYouReplies.length)];
+    return replyText(replyToken, randomReply);
+  } else if (text.includes("เหงา")) {
+    const randomReply = lonelyReplies[Math.floor(Math.random() * lonelyReplies.length)];
+    return replyText(replyToken, randomReply);
+  } else if (text.includes("รัก")) {
+    const randomReply = loveReplies[Math.floor(Math.random() * loveReplies.length)];
+    return replyText(replyToken, randomReply);
+  } else if (text.includes("งอน")) {
+    const randomReply = sulkReplies[Math.floor(Math.random() * sulkReplies.length)];
+    return replyText(replyToken, randomReply);
+  } else if (text.includes("ฝันดี")) {
+    const randomReply = sweetDreamsReplies[Math.floor(Math.random() * sweetDreamsReplies.length)];
+    return replyText(replyToken, randomReply);
+  } else if (text.includes("สวัสดี")) {
+    const randomReply = helloReplies[Math.floor(Math.random() * helloReplies.length)];
+    return replyText(replyToken, randomReply);
   }
 
-  // ถ้าไม่มีคำที่ตรงกัน ให้สุ่มตอบกลับทั่วไป
+  // ถ้าไม่มีคำที่ตรงกับข้อความ ก็จะตอบกลับข้อความสุ่ม
   const randomFallback = [
     "พูดอีกก็เขินนะ 😳💕",
     "หืมมม~ หมายถึงอะไรน้าาา 😘",
