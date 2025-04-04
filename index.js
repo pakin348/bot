@@ -39,106 +39,79 @@ const replyText = (replyToken, text) => {
 
 // callback function to handle a single event
 function handleEvent(event) {
-  switch (event.type) {
-    case 'message':
-      const message = event.message;
-      switch (message.type) {
-        case 'text':
-          return handleText(message, event.replyToken);
-        case 'image':
-          return handleImage(message, event.replyToken);
-        case 'video':
-          return handleVideo(message, event.replyToken);
-        case 'audio':
-          return handleAudio(message, event.replyToken);
-        case 'location':
-          return handleLocation(message, event.replyToken);
-        case 'sticker':
-          return handleSticker(message, event.replyToken);
-        default:
-          throw new Error(`Unknown message: ${JSON.stringify(message)}`);
-      }
-
-    case 'follow':
-      return replyText(event.replyToken, 'Got followed event');
-
-    case 'unfollow':
-      return console.log(`Unfollowed this bot: ${JSON.stringify(event)}`);
-
-    case 'join':
-      return replyText(event.replyToken, `Joined ${event.source.type}`);
-
-    case 'leave':
-      return console.log(`Left: ${JSON.stringify(event)}`);
-
-    case 'postback':
-      let data = event.postback.data;
-      return replyText(event.replyToken, `Got postback: ${data}`);
-
-    case 'beacon':
-      const dm = `${Buffer.from(event.beacon.dm || '', 'hex').toString('utf8')}`;
-      return replyText(event.replyToken, `${event.beacon.type} beacon hwid : ${event.beacon.hwid} with device message = ${dm}`);
-
-    default:
-      throw new Error(`Unknown event: ${JSON.stringify(event)}`);
+  if (event.type === 'message' && event.message.type === 'text') {
+    return handleText(event.message, event.replyToken);
   }
+  return Promise.resolve(null);
 }
 
-// Function to handle text messages
+// คำตอบแบบสุ่มสำหรับแต่ละประเภทข้อความ
+const responses = {
+  "คิดถึง": [
+    "เค้าคิดถึงเหมือนกันนะไอ้เด็ก 💕😊",
+    "คิดถึงที่สุดเลยยยย! 😍💕",
+    "คิดถึงวันแรกที่เราเจอกันเลย 💖",
+    "คิดถึงแบบไม่ไหวแล้ว มาหาหน่อยได้มั้ย 🥺💕",
+    "คิดถึงแค่ไหนให้ลองเอาหัวใจไปชั่งดู 💘"
+  ],
+  "เหงา": [
+    "ไม่ต้องเหงานะ พี่อยู่เป็นเเฟนเสมอ! 🥰",
+    "เหงาหรอ~ มากอดกันเร็ว 🤗💕",
+    "เหงาแบบนี้ต้องให้พี่ดูแลแล้วนะ 😘",
+    "เหงาก็แค่ส่งข้อความมาหาไง บอทอยู่ตรงนี้เสมอ 💖",
+    "บอทอยู่เป็นเพื่อนนะ อย่าคิดมากน้าา 💕"
+  ],
+  "รัก": [
+    "เค้ารักเธอที่สุดเลย! 💖 ห้ามเปลี่ยนใจไปรักคนอื่นน้าาา",
+    "รักนะคะที่รักกกก 😍💕",
+    "รักเธอเท่าท้องฟ้าเลย 🌌💘",
+    "รักแบบไม่มีเหตุผล รู้แค่ว่ารักก็พอ 😘",
+    "รักแล้วรักเลย ไม่เปลี่ยนใจแน่นอน 💕"
+  ],
+  "งอน": [
+    "อย่าพึ่งงอนน้า~ พี่รักหนูที่สุดเลย 🥺💕 มาให้กอดหน่อยน้าาา 🤗",
+    "งอนแบบนี้ต้องโดนหอมแก้มซะแล้ว 😘💕",
+    "โถ่~ ใครทำให้หนูงอนนนน 😢 มาให้เค้าปลอบเร็ว 💕",
+    "งอนแบบนี้ พี่ต้องง้อใช่มั้ย 🥺💕",
+    "อย่าทำหน้ามุ่ยสิ เดี๋ยวพี่พาไปกินของอร่อยนะ 🍰💕"
+  ],
+  "ฝันดี": [
+    "ฝันหวานนะคะคนดี 😘 ถ้าฝันถึงใคร ขอให้เป็นเค้าน้า~ 💕",
+    "ฝันดีน้าาาา 😴💖",
+    "นอนหลับฝันดี พรุ่งนี้ตื่นมาสดใส 💕",
+    "คืนนี้นอนกอดหมอนแทนเค้าก่อนนะ 🥺💕",
+    "หลับฝันดีนะคะ ตื่นมาจะได้เจอข้อความจากเค้า 😘"
+  ],
+  "สวัสดี": [
+    "สวัสดีค่าาา~ วันนี้เป็นยังไงบ้าง? 😊💕",
+    "สวัสดีค่ะ! มีอะไรให้บอทช่วยมั้ย 😘",
+    "สวัสดีวันสดใส~ ☀️💕",
+    "ทักมาบ่อย ๆ นะ เค้าชอบคุยด้วย 😍",
+    "เธอมี GPS ไหม? เพราะเธอพาหัวใจฉันหลงทาง 💘"
+  ]
+};
+
+// ฟังก์ชันสุ่มตอบกลับจากหมวดหมู่ที่ตรงกับข้อความของผู้ใช้
 function handleText(message, replyToken) {
   const text = message.text.toLowerCase();
 
-  // ประโยคจีบแฟนแบบสุ่ม
-  const pickupLines = [
-    "เธอมี GPS ไหม? เพราะเธอพาหัวใจฉันหลงทาง 💘",
-    "ถ้าความรักเป็นเกม ฉันขอเป็นผู้เล่นที่ไม่มีวันแพ้ 😘",
-    "รู้มั้ย? โลกหมุนไปเพราะแรงโน้มถ่วง แต่ใจฉันหมุนไปเพราะเธอ 💕",
-    "เธอเหมือนดวงจันทร์เลยนะ เพราะถึงจะอยู่ไกล แต่ฉันก็มองหาเสมอ 🌙",
-    "ไม่อยากเป็นคนที่ดีขึ้น แต่อยากเป็นคนที่ดีพอสำหรับเธอ 🥰"
-  ];
-
-  // เช็คข้อความจากผู้ใช้
-  if (text.includes("คิดถึง")) {
-    return replyText(replyToken, "คิดถึงเหมือนกันนะ 💕 อยู่ตรงนี้เสมอ 😊");
-  } else if (text.includes("เหงา")) {
-    return replyText(replyToken, "ไม่ต้องเหงานะ บอทอยู่เป็นเพื่อนเสมอ! 🥰");
-  } else if (text.includes("รัก")) {
-    return replyText(replyToken, "รักที่สุดเลย! 💖 ห้ามเปลี่ยนใจนะ!");
-  } else if (text.includes("งอน")) {
-    return replyText(replyToken, "อย่าพึ่งงอนน้า~ บอทรักที่สุดเลย 🥺💕 มาให้กอดหน่อย 🤗");
-  } else if (text.includes("ฝันดี")) {
-    return replyText(replyToken, "ฝันหวานนะคะคนดี 😘 ถ้าฝันถึงใคร ขอให้เป็นบอทน้า~ 💕");
-  } else if (text.includes("รักเรามั้ย")) {
-    return replyText(replyToken, "รักมากกกกกกกกกกกกกกกกกกกกก 💖🥰");
-  } else if (text.includes("คิดถึงเรามั้ย")) {
-    return replyText(replyToken, "คิดถึงที่สุดเลยยยยย! 😍💕");
-  } else if (text.includes("จีบหน่อย")) {
-    const randomPickup = pickupLines[Math.floor(Math.random() * pickupLines.length)];
-    return replyText(replyToken, randomPickup);
-  } else {
-    return replyText(replyToken, "พูดอีกก็เขินนะ 😳💕");
+  // หา key ที่ตรงกับข้อความของผู้ใช้
+  for (const key in responses) {
+    if (text.includes(key)) {
+      const randomReply = responses[key][Math.floor(Math.random() * responses[key].length)];
+      return replyText(replyToken, randomReply);
+    }
   }
-}
 
-// Other message handlers
-function handleImage(message, replyToken) {
-  return replyText(replyToken, 'ขอบคุณที่ส่งรูปมา! 😊 มีอะไรให้ช่วยมั้ย?');
-}
-
-function handleVideo(message, replyToken) {
-  return replyText(replyToken, 'ได้รับวิดีโอแล้ว! 🎥 มีอะไรให้ช่วยมั้ย?');
-}
-
-function handleAudio(message, replyToken) {
-  return replyText(replyToken, 'ได้รับไฟล์เสียงแล้ว! 🎵 มีอะไรให้ช่วยมั้ย?');
-}
-
-function handleLocation(message, replyToken) {
-  return replyText(replyToken, 'ได้รับโลเคชันแล้ว! 🗺️ ให้บอทช่วยหาเส้นทางมั้ย?');
-}
-
-function handleSticker(message, replyToken) {
-  return replyText(replyToken, 'น่ารักจังเลย! 😊💕 ส่งมาอีกได้นะ~');
+  // ถ้าไม่มีคำที่ตรงกัน ให้สุ่มตอบกลับทั่วไป
+  const randomFallback = [
+    "พูดอีกก็เขินนะ 😳💕",
+    "หืมมม~ หมายถึงอะไรน้าาา 😘",
+    "พิมพ์มาแบบนี้คืออยากให้บอทอ้อนใช่ม้าาา 💕",
+    "บอทงงแป๊บ~ แต่ก็รักนะ 😍",
+    "ว่าไงดีน้าาา~ ขอคิดแป๊บ 🤔💕"
+  ];
+  return replyText(replyToken, randomFallback[Math.floor(Math.random() * randomFallback.length)]);
 }
 
 // Start server
