@@ -3,6 +3,7 @@
 const line = require('@line/bot-sdk');
 const express = require('express');
 const config = require('./config.json');
+const cron = require('node-cron');
 
 // create LINE SDK client
 const client = new line.messagingApi.MessagingApiClient(config);
@@ -37,6 +38,20 @@ const replyText = (replyToken, text) => {
   });
 };
 
+// Function to send an audio file (song)
+function sendSong(replyToken, songUrl) {
+  return client.replyMessage({
+    replyToken,
+    messages: [
+      {
+        type: 'audio',
+        originalContentUrl: songUrl,  // URL ของเพลง
+        duration: 240000  // ระยะเวลาเพลง (เป็นมิลลิวินาที, 240000ms = 4 นาที)
+      }
+    ]
+  });
+}
+
 // callback function to handle a single event
 function handleEvent(event) {
   if (event.type === 'message' && event.message.type === 'text') {
@@ -68,7 +83,7 @@ function handleText(message, replyToken) {
     "ความคิดถึงเธอทำให้การรอคอยนี้มีความหมาย"
   ];
 
-  // สุ่มคำตอบสำหรับ "รัก"
+  // สุ่มคำตอบสำหรับ "รักนะ"
   const loveReplies = [
     "เค้ารักเธอที่สุดเลย! 💖 ห้ามเปลี่ยนใจไปรักคนอื่นน้าาา",
     "รักนะคะที่รักกกก 😍💕",
@@ -85,7 +100,7 @@ function handleText(message, replyToken) {
     "จะรักเธอไปจนกว่าหัวใจจะหยุดเต้น",
     "ถ้าความรักเป็นดอกไม้ พี่จะปลูกสวนดอกไม้ให้เธอทั้งชีวิต",
     "เวลาที่ดีที่สุดคือเวลาที่ได้บอกว่ารักเธอ"
-  ];
+  ];  
 
   // สุ่มคำตอบสำหรับ "งอน"
   const sulkReplies = [
@@ -201,7 +216,7 @@ function handleText(message, replyToken) {
     "มากอดกันนะที่รัก เพราะอ้อมกอดของเธอคือยาวิเศษที่รักษาทุกความเหนื่อยล้าของเค้า"
   ]
 
-  // สุ่มคำตอบสำหรับ "จีบ"
+  // สุ่มคำตอบสำหรับ "จีบหน่อย"
   const courtReplies = [
     "เธอรู้มั้ย ทุกครั้งที่เห็นรอยยิ้มของเธอ โลกของเค้าก็สว่างขึ้นมาทันที",
     "ไม่ว่าจะผ่านไปกี่เดือน เค้าก็ยังตกหลุมรักเธอซ้ำๆ ทุกวัน",
@@ -220,11 +235,20 @@ function handleText(message, replyToken) {
     "ถ้าชีวิตนี้เป็นนิยาย เธอคือตอนจบที่เค้าอยากให้เป็นไปตลอดกาล"
   ]
 
+  // สุ่มคำตอบสำหรับ "เพลง"
+const songLinks = [
+  "https://www.youtube.com/watch?v=dQw4w9WgXcQ",  // Example URL (can replace with any song URL)
+  "https://www.youtube.com/watch?v=3JZ_D3ELwOQ",  // Example URL (can replace with any song URL)
+  "https://www.youtube.com/watch?v=kJQP7kiw5Fk",  // Example URL (can replace with any song URL)
+  "https://www.youtube.com/watch?v=2Vv-BfVoq4g",  // Example URL (can replace with any song URL)
+  "https://www.youtube.com/watch?v=ZZ5LpwO-An4"   // Example URL (can replace with any song URL)
+];
+
   // เช็คข้อความจากผู้ใช้แล้วสุ่มตอบ
   if (text.includes("คิดถึง")) {
     const randomReply = thinkOfYouReplies[Math.floor(Math.random() * thinkOfYouReplies.length)];
     return replyText(replyToken, randomReply);
-  } else if (text.includes("รัก")) {
+  } else if (text.includes("รักนะ")) {
     const randomReply = loveReplies[Math.floor(Math.random() * loveReplies.length)];
     return replyText(replyToken, randomReply);
   } else if (text.includes("งอน")) {
@@ -245,10 +269,14 @@ function handleText(message, replyToken) {
   } else if (text.includes("กอดหน่อย")) {
     const randomReply = givemeahugReplies[Math.floor(Math.random() * givemeahugReplies.length)];
     return replyText(replyToken, randomReply);
-  } else if (text.includes("จีบ")) {
+  } else if (text.includes("จีบหน่อย")) {
     const randomReply = courtReplies[Math.floor(Math.random() * courtReplies.length)];
     return replyText(replyToken, randomReply);
-  }
+  } else if (text.includes("เพลง")) {
+    const randomSongUrl = songLinks[Math.floor(Math.random() * songLinks.length)];
+    // Use sendSong to reply with audio instead of a text message.
+    return sendSong(replyToken, randomSongUrl);
+}
 
   // ถ้าไม่มีคำที่ตรงกับข้อความ ก็จะตอบกลับข้อความสุ่ม
   const randomFallback = [
@@ -267,26 +295,3 @@ app.listen(port, () => {
   console.log(`listening on ${port}`);
 });
 
-// วันที่ครบรอบเริ่มต้น (ตั้งให้ตามจริง)
-const anniversaryDate = new Date('2023-05-01'); // ตัวอย่าง: 1 พฤษภาคม 2023
-
-// วันที่ปัจจุบัน
-const today = new Date();
-
-// เช็คว่าวันนี้ตรงกับวันครบรอบ (เดือนและวันที่ต้องตรงกัน)
-if (
-  today.getDate() === anniversaryDate.getDate() &&
-  today.getMonth() === anniversaryDate.getMonth()
-) {
-  const yearDiff = today.getFullYear() - anniversaryDate.getFullYear();
-
-  let anniversaryText = `วันนี้ครบรอบ ${yearDiff} ปีแล้วนะ ตั้งแต่วันที่เรารู้จักกัน 🥺💕`;
-  if (yearDiff === 1) {
-    anniversaryText = `วันนี้ครบรอบ 1 ปีแล้วน้า~ เรารู้จักกันมาครบปีแล้ว! 💖✨`;
-  }
-
-  return replyText(replyToken, anniversaryText);
-}
-
-// ถ้าไม่ใช่วันครบรอบก็ไม่ต้องส่งข้อความ
-return;
